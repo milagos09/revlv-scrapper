@@ -22,6 +22,7 @@ app.get("/", (req, res) => {
 app.post("/", async (req, res) => {
     console.log(req.body);
     await extract(req.body.start, req.body.end, req.body.search, req.body.show);
+    res.send({ status: "done" });
 });
 
 app.listen(4000, () => console.log("server started at port 4000"));
@@ -45,18 +46,20 @@ const extract = async (start, end, search = "", show) => {
     await page.type("#inputUserName", process.env.USER, { delay: 100 });
     await page.type("#inputPassword", process.env.PASS);
     await page.click("button[type='submit']");
-    await page.waitForTimeout(500);
+    // await page.waitForTimeout(500);
+    await page.waitForSelector("#navbar_controller_dropdown_link");
 
     /* This is the code for selecting the controller. */
     console.log("navigating to controller..");
     await page.click("#navbar_controller_dropdown_link");
     await page.click("#controller_1");
-    await page.waitForTimeout(500);
+    // await page.waitForTimeout(500);
+    await page.waitForSelector("#report_dropdown");
 
     /* This is the code for selecting the report. */
     await page.click("#report_dropdown");
     await page.click("a[data-method='downtime_report']");
-    await page.waitForTimeout(500);
+    // await page.waitForTimeout(500);
 
     /* This is the code for selecting the date range. */
     console.log("resetting fields..");
@@ -76,18 +79,26 @@ const extract = async (start, end, search = "", show) => {
     console.log("collecting data from table..");
     await page.waitForTimeout(4000);
     const data = await page.evaluate(() => {
-        let count = 0;
         const th = Array.from(document.querySelectorAll("th")).map((e) => e.textContent);
         const td = Array.from(document.querySelectorAll("td")).map((e) => {
             return e.textContent;
         });
 
-        return { th, td };
-    });
+        const merge = [];
+        merge.push(th);
 
-    console.log(data.th);
-    await fs.writeFile("logs.txt", data.td.join("\n"));
+        for (let i = 0; i < td.length / 5; i++) {
+            merge.push(td.splice(0, 5));
+        }
+
+        const rows = merge.map((row) => row.toString());
+        let csv = "";
+        rows.forEach((row) => (csv += row + "\n"));
+        return csv;
+    });
+    console.log("converting to csv..");
+    await fs.writeFile("logs.csv", data);
     await browser.close();
-    console.log(__dirname);
-    cp.exec(`start "" "${__dirname}\\logs.txt"`);
+
+    cp.exec(`start "" "${__dirname}\\logs.csv"`);
 };

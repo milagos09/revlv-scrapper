@@ -8,9 +8,9 @@
     </head>
     <body>
         <form method="post" action="/">
-            <label>Start:<input id="start" placeholder="yyyy-mm-dd" required /></label>
+            <label>Start:<input type="date" id="start" placeholder="yyyy-mm-dd" required /></label>
             <br /><br />
-            <label>End:<input id="end" placeholder="yyyy-mm-dd" required /></label>
+            <label>End:<input type="date" id="end" placeholder="yyyy-mm-dd" required /></label>
             <br /><br />
             <label>Search:<input id="search" placeholder="all" /></label>
             <br /><br />
@@ -34,14 +34,17 @@
                 button.disabled = true;
                 const body = { start: start.value, end: end.value, search: search.value, show: show.checked };
 
-                await fetch("http://localhost:4000", {
+                const response = await fetch("http://localhost:4000", {
                     method: "POSt",
                     headers: {
                         "Content-Type": "application/json",
                     },
                     body: JSON.stringify(body),
                 });
+
                 button.disabled = false;
+
+                response.json().then((data) => console.log(data));
             } else {
                 alert("invalid inputs");
             }
