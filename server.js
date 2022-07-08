@@ -21,12 +21,12 @@ app.get("/", (req, res) => {
 });
 app.post("/", async (req, res) => {
     console.log(req.body);
-    await extract(req.body.start, req.body.end, req.body.show);
+    await extract(req.body.start, req.body.end, req.body.search, req.body.show);
 });
 
 app.listen(4000, () => console.log("server started at port 4000"));
 
-const extract = async (start, end, show) => {
+const extract = async (start, end, search = "", show) => {
     console.log("extracting please wait..");
     let dateFrom = start;
     let dateTo = end;
@@ -69,18 +69,24 @@ const extract = async (start, end, show) => {
     await page.type("#min", dateFrom);
     await page.type("#max", dateTo);
     await page.click("body");
+    await page.type("input[type='search']", search);
     await page.select("select[name='reports-alarm-table_length']", "-1");
 
     /* This is the code for getting the logs from the website. */
     console.log("collecting data from table..");
     await page.waitForTimeout(4000);
-    const tr = await page.evaluate(() => {
-        const tr = Array.from(document.querySelectorAll("tr")).map((e) => e.textContent);
-        return tr;
+    const data = await page.evaluate(() => {
+        let count = 0;
+        const th = Array.from(document.querySelectorAll("th")).map((e) => e.textContent);
+        const td = Array.from(document.querySelectorAll("td")).map((e) => {
+            return e.textContent;
+        });
+
+        return { th, td };
     });
 
-    console.log("number of rows found", tr.length - 1);
-    await fs.writeFile("logs.txt", tr.join("\n"));
+    console.log(data.th);
+    await fs.writeFile("logs.txt", data.td.join("\n"));
     await browser.close();
     console.log(__dirname);
     cp.exec(`start "" "${__dirname}\\logs.txt"`);
