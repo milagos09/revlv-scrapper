@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Log extractor</title>
+    </head>
+    <body>
+        <form method="post" action="/">
+            <label>Start:<input id="start" placeholder="yyyy-mm-dd" /></label>
+            <br /><br />
+            <label>End:<input id="end" placeholder="yyyy-mm-dd" /></label>
+            <br /><br />
+            <label>Show browser:<input type="checkbox" id="show" checked /></label>
+            <br /><br />
+            <button type="submit">Extract</button>
+            <br />
+        </form>
+    </body>
+    <script>
+        const button = document.querySelector("button");
+        const form = document.querySelector("form");
+        const start = document.getElementById("start");
+        const end = document.getElementById("end");
+        const show = document.getElementById("show");
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            if (start.value && end.value) {
+                button.disabled = true;
+                const body = { start: start.value, end: end.value, show: show.checked };
+
+                await fetch("http://localhost:4000", {
+                    method: "POSt",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(body),
+                });
+                button.disabled = false;
+            } else {
+                alert("invalid inputs");
+            }
+        });
+    </script>
+</html>
